@@ -121,8 +121,14 @@ export default function Home() {
     setBalance(STARTING_BALANCE);
   }
 
+  function clearStrategy() {
+    setShowStrategy(false);
+    setStrategy(null);
+  }
+
   function handleStrategy() {
     if (!address) return;
+    clearStrategy();
     setError(null);
     setShowStrategy(true);
     startAdvise(async () => {
@@ -146,6 +152,9 @@ export default function Home() {
             <h1>walrus memory horse derby</h1>
             <p className="sub">
               bet on a square. only speed is visible. walrus memory learns how you bet.
+            </p>
+            <p className="sub">
+              you start with $1000. reloading resets your cash — your race history doesn&apos;t.
             </p>
           </div>
           <div className="wallet-box">
@@ -335,13 +344,7 @@ export default function Home() {
             {advising ? "thinking…" : "suggest a betting strategy"}
           </button>
           {showStrategy && (
-            <button
-              className="secondary"
-              onClick={() => {
-                setShowStrategy(false);
-                setStrategy(null);
-              }}
-            >
+            <button className="secondary" onClick={clearStrategy}>
               clear
             </button>
           )}
