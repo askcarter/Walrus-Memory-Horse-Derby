@@ -273,13 +273,18 @@ export default function Home() {
                     : "select a horse"}
                 </button>
               </div>
-              <p className="hint">
-                only <strong>speed</strong> is shown. endurance, temperament and luck are
-                hidden — luck rolls a pre-race boost to the other stats. payouts are set
-                from speed, so the favorite pays least.
-              </p>
+
               <details className="how-it-works">
                 <summary>how racing works</summary>
+                <p className="hint">
+                  only <strong>speed</strong> is shown. endurance, temperament and luck are
+                  hidden — luck rolls a pre-race boost to the other stats. payouts are set
+                  from speed, so the favorite pays least.
+                </p>
+                <p className="hint">
+                  spd = speed, end = endurance, tmp = temperament, lck = luck. a green +n is a
+                  luck boost applied for this race only.
+                </p>
                 <p className="hint">
                   each race, every horse gets a score and the highest wins:{" "}
                   <strong>speed×1.5 + endurance×1.2 + temperament×0.8 + a little noise</strong>.
@@ -320,10 +325,7 @@ export default function Home() {
 
           <div className="facts">
             <h3>final stats (hidden until now)</h3>
-            <p className="hint">
-              spd = speed, end = endurance, tmp = temperament, lck = luck. a green +n is a
-              luck boost applied for this race only.
-            </p>
+
             <div className="reveal-grid">
               {race.finishOrder.map((l) => (
                 <div
