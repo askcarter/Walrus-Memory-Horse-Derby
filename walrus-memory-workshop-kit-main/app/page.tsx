@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { ConnectButton, useCurrentAccount } from "@mysten/dapp-kit";
 import { recordRace, suggestStrategy, type StrategyResult } from "./actions";
 import {
   HORSES,
@@ -16,6 +17,9 @@ const STARTING_BALANCE = 1000;
 type Phase = "betting" | "racing" | "result";
 
 export default function Home() {
+  const account = useCurrentAccount();
+  const address = account?.address ?? null;
+
   const [balance, setBalance] = useState(STARTING_BALANCE);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [betAmount, setBetAmount] = useState(50);
@@ -35,7 +39,22 @@ export default function Home() {
 
   const selected = HORSES.find((h) => h.id === selectedId) ?? null;
   const bet = Math.min(betAmount, balance);
-  const canBet = selected !== null && bet > 0 && bet <= balance && phase === "betting";
+  const canBet =
+    selected !== null && bet > 0 && bet <= balance && phase === "betting" && address !== null;
+
+  // Switching (or disconnecting) wallets starts a fresh session — the strategy
+  // advisor and history belong to whichever wallet is connected.
+  useEffect(() => {
+    setPhase("betting");
+    setRace(null);
+    setRunning(false);
+    setOutcome(null);
+    setSaveNote(null);
+    setSelectedId(null);
+    setBalance(STARTING_BALANCE);
+    setStrategy(null);
+    setShowStrategy(false);
+  }, [address]);
 
   // Kick off the CSS transition one frame after the lanes mount.
   useEffect(() => {
@@ -51,9 +70,13 @@ export default function Home() {
     const id = setTimeout(() => {
       setBalance(outcome.balanceAfter);
       setPhase("result");
+      if (!address) {
+        setSaveNote("not saved — wallet disconnected");
+        return;
+      }
       setSaveNote("saving to walrus memory…");
       startSave(async () => {
-        const res = await recordRace(outcome);
+        const res = await recordRace(address, outcome);
         setSaveNote(res.ok ? "saved to walrus memory ✓" : `save failed: ${res.error}`);
       });
     }, longest + 250);
@@ -99,10 +122,11 @@ export default function Home() {
   }
 
   function handleStrategy() {
+    if (!address) return;
     setError(null);
     setShowStrategy(true);
     startAdvise(async () => {
-      const res = await suggestStrategy();
+      const res = await suggestStrategy(address);
       if (!res.ok) {
         setError(res.error);
         setStrategy(null);
@@ -124,15 +148,34 @@ export default function Home() {
               bet on a square. only speed is visible. walrus memory learns how you bet.
             </p>
           </div>
-          <div className="balance-box">
-            <label>balance</label>
-            <div className={`balance ${balance < STARTING_BALANCE ? "down" : "up"}`}>
-              ${balance}
-            </div>
+          <div className="wallet-box">
+            <ConnectButton />
+            {address && (
+              <div className="balance-box">
+                <label>balance</label>
+                <div className={`balance ${balance < STARTING_BALANCE ? "down" : "up"}`}>
+                  ${balance}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
 
+      {!address && (
+        <section className="card connect-card">
+          <h3 className="verdict">connect your slush wallet to play</h3>
+          <p className="hint">
+            your betting history is stored per wallet in walrus memory, so it follows you
+            across sessions and devices — and stays separate from every other player&apos;s.
+            connect a wallet to start betting.
+          </p>
+          <ConnectButton />
+        </section>
+      )}
+
+      {address && (
+        <>
       {/* ---- The track ---- */}
       <section className="card">
         <div className="track">
@@ -332,6 +375,8 @@ export default function Home() {
           </div>
         )}
       </section>
+        </>
+      )}
 
       {error && <div className="error">{error}</div>}
     </main>

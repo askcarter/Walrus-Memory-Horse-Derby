@@ -1,7 +1,8 @@
 "use server";
 
+import { isValidSuiAddress } from "@mysten/sui/utils";
 import { getMemWal } from "@/lib/memwal";
-import { DEFAULT_NAMESPACE } from "@/lib/namespaces";
+import { bettingNamespace } from "@/lib/namespaces";
 import {
   formatRaceMemory,
   parseRaceMemory,
@@ -23,13 +24,18 @@ export type RecordOutcome =
  * "PURPLE lost") and lose the per-race linkage the strategy advisor depends on.
  * rememberAndWait() blocks until the memory is durable so it's recallable
  * immediately (avoids the indexer-lag window).
+ *
+ * `owner` is the connected wallet's Sui address. We validate it (it arrives from
+ * the client) and use it to scope the namespace so each player only ever writes
+ * to their own history.
  */
-export async function recordRace(outcome: BetOutcome): Promise<RecordOutcome> {
+export async function recordRace(owner: string, outcome: BetOutcome): Promise<RecordOutcome> {
+  if (!isValidSuiAddress(owner)) return { ok: false, error: "connect a wallet to save races" };
   try {
     const text = formatRaceMemory(outcome);
     const memwal = getMemWal();
-    const result = await memwal.rememberAndWait(text, DEFAULT_NAMESPACE);
-    console.log(`[recordRace] stored → ${text}`);
+    const result = await memwal.rememberAndWait(text, bettingNamespace(owner));
+    console.log(`[recordRace] ${owner.slice(0, 10)}… stored → ${text}`);
     return { ok: true, text, blobId: result.blob_id };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "unknown error" };
@@ -54,14 +60,18 @@ export type StrategyResult =
  * The advice itself is computed by a transparent heuristic (buildStrategy), not
  * an LLM — the SDK has no general completion endpoint, and pulling in the Vercel
  * AI SDK for one feature would violate the kit's no-heavy-dependencies rule.
+ *
+ * Scoped to the connected wallet's namespace, so the advice reflects only that
+ * player's own betting history.
  */
-export async function suggestStrategy(): Promise<StrategyResult> {
+export async function suggestStrategy(owner: string): Promise<StrategyResult> {
+  if (!isValidSuiAddress(owner)) return { ok: false, error: "connect a wallet for strategy advice" };
   try {
     const memwal = getMemWal();
     const result = await memwal.recall(
       "horse race bet outcome win loss profit balance strategy",
       50,
-      DEFAULT_NAMESPACE,
+      bettingNamespace(owner),
     );
     const outcomes = result.results
       .map((r) => parseRaceMemory(r.text))

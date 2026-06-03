@@ -11,8 +11,10 @@ luck rolls a pre-race boost to the other stats. Every race you bet is written to
 Walrus Memory, and the **strategy advisor** recalls that history to spot patterns
 (which colors pay off, favorites vs. underdogs, how you size your bets).
 
-Single screen. No database, no auth. Your betting history persists across
-sessions, models, and devices via your Walrus Memory account.
+Connect a **Slush wallet** to play: each player's history is scoped to their own
+wallet address (`betting-history:<0x…>`), so it persists across sessions and
+devices and stays separate from every other player's. No database. The only
+"auth" is the wallet connection itself.
 
 ## Branches
 
@@ -47,6 +49,8 @@ tool, paste `SKILL.md` into context before asking it to write Walrus Memory code
 - Node.js 18+ (22 recommended — matches the rest of the monorepo)
 - pnpm
 - A Walrus Memory account + a delegate key
+- A **Slush wallet** (browser extension) to connect and play. Any Sui account
+  works — the app only reads its address, so no testnet SUI or gas is needed.
 
 ## Setup
 
@@ -80,6 +84,10 @@ tool, paste `SKILL.md` into context before asking it to write Walrus Memory code
 
 ## How to use
 
+- **Connect your Slush wallet** (top-right). The game is gated until a wallet is
+  connected — every recorded race is owned by a wallet address. The connection
+  auto-reconnects on reload, and switching wallets starts a fresh session bound
+  to that wallet's history.
 - Pick one of the five horses in the **place your bet** card (you only see each
   horse's speed and its payout), set a wager, and hit race. The squares run; the
   winner is decided by the hidden stats plus luck.
@@ -94,16 +102,22 @@ tool, paste `SKILL.md` into context before asking it to write Walrus Memory code
 | Surface | File |
 |---|---|
 | Walrus Memory client (cached per process) | `lib/memwal.ts` |
+| Per-wallet namespace helper | `lib/namespaces.ts` |
 | Game logic (roster, race sim, odds) | `lib/horses.ts` |
 | Memory record schema + strategy heuristics | `lib/raceMemory.ts` |
 | Server actions (`recordRace`, `suggestStrategy`) | `app/actions.ts` |
+| Wallet providers (dapp-kit) | `app/providers.tsx` |
 | UI (one client component) | `app/page.tsx` |
 | Env sanity-check script | `verify.ts` |
 
 ## Notes
 
-- Memories are namespaced to `betting-history`. To start fresh, change the
-  namespace in `lib/namespaces.ts`.
+- Memories are namespaced **per wallet** as `betting-history:<address>`
+  (`lib/namespaces.ts`). The connected wallet's Sui address is validated
+  server-side before it's used as a namespace.
+- Wallet connection uses `@mysten/dapp-kit`. This app makes **no Sui RPC calls** —
+  it only reads the connected address — so dapp-kit's `SuiClientProvider` holds a
+  dormant client that's never exercised (see `app/providers.tsx`).
 - Saving uses `rememberAndWait()`, which blocks until the race record is durable.
   This avoids the ~3s indexer-lag window where a freshly-stored memory isn't yet
   recallable, so the strategy advisor sees it immediately.

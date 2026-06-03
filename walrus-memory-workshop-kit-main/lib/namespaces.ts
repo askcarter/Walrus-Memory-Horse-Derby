@@ -1,6 +1,12 @@
-// The horse-derby sample stores everything under a single namespace: the user's
-// betting history. (The reading-tracker base app used books/articles/papers and a
-// UI picker; a betting game has one coherent memory space, so we collapse to one.)
-export const ALLOWED_NAMESPACES = ["betting-history"] as const;
-export type Namespace = (typeof ALLOWED_NAMESPACES)[number];
-export const DEFAULT_NAMESPACE: Namespace = "betting-history";
+// Each connected wallet gets its own slice of memory. We scope by Sui address:
+// `betting-history:<0x…>`. Same wallet → same namespace → your history follows
+// you across sessions and devices, isolated from other players.
+export const BETTING_NAMESPACE_BASE = "betting-history";
+
+// Constructor-level fallback only — every call passes an explicit per-wallet
+// namespace, so this is never actually used to read/write game data.
+export const DEFAULT_NAMESPACE = BETTING_NAMESPACE_BASE;
+
+export function bettingNamespace(owner: string): string {
+  return `${BETTING_NAMESPACE_BASE}:${owner}`;
+}

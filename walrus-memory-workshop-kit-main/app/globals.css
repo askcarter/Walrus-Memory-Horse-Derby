@@ -234,12 +234,31 @@ button.secondary {
 
 /* ---- Horse derby ---- */
 
+.wallet-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
 .balance-box {
   display: flex;
   flex-direction: column;
   gap: 6px;
   align-items: flex-end;
   flex-shrink: 0;
+}
+
+.connect-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.connect-card .verdict {
+  text-transform: none;
 }
 
 .balance {

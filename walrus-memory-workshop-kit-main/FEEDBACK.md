@@ -87,6 +87,20 @@ If in doubt, log it.
 **What you did instead:** Used `remember()` for the per-race record. Inferred from the verb descriptions, not from explicit guidance.
 **Workshop impact:** Minor — a one-line rule of thumb ("remember() for records you'll parse; analyze() for free prose you'll query by meaning") would remove the guesswork.
 
+---
+
+**Where it hit:** Adding Slush wallet support so each player gets their own betting history.
+**What was missing:** There's no zero-dependency way to connect a Sui wallet — supporting *any* wallet means pulling in `@mysten/dapp-kit` + `@mysten/sui` + `@tanstack/react-query` (~70 transitive packages). That directly conflicts with CLAUDE.md's "do not add heavy dependencies" and "do not add an auth layer." Neither SKILL.md nor CLAUDE.md acknowledges that wallet-based per-user identity — a very natural thing to want on a memory layer that's *already* Sui-native — requires breaking those guardrails.
+**What you did instead:** Added the deps with explicit approval and logged it here. Used the address only (no signing), so the footprint is as small as a real wallet connect gets.
+**Workshop impact:** Significant for anyone building multi-user. The guardrails read as absolute; they should carve out "wallet connect is expected to add dapp-kit" so participants don't think they're doing something wrong.
+
+---
+
+**Where it hit:** Deciding what "store betting histories per user via a wallet" should mean.
+**What was missing:** Walrus Memory has a real ownership model — `@mysten-incubation/memwal/account` (`createAccount` / `addDelegateKey`) ties memories to a wallet-owned on-chain `MemWalAccount`. But that path needs the contract `packageId` + `registryId` (**not in SKILL.md or the kit's env/`.env.example`**), gas, and a per-user delegate key generated in the browser (against the "key never reaches the browser" rule). SKILL.md documents the account module's API but gives no end-to-end "connect wallet → own your memories" recipe, and no contract addresses to call it with.
+**What you did instead:** Chose the lightweight read-the-address-and-scope-the-namespace pattern (`betting-history:<address>`) on the existing shared delegate key. Per-user and cross-session, but **not** true on-chain ownership — the shared key still technically owns/can read every namespace.
+**Workshop impact:** This is the crux of "building on the memory layer." Participants will reasonably expect wallet = ownership. The kit should either ship the contract IDs + an account-flow example, or explicitly document the namespace-scoping pattern as the lightweight alternative and name its privacy trade-off.
+
 
 
 ## SDK & UX surprises
@@ -104,6 +118,13 @@ If in doubt, log it.
 **What was missing:** SKILL.md says the `*AndWait()` variants "block until the memory is durable" but gives no sense of *how long* that is. An observed call took **~24.6s** to return (`POST / 200 in 24.6s … recordRace(…) in 24623ms`) — that's the relayer doing SEAL encryption + Walrus upload synchronously. Nothing warns you a durable write is tens of seconds, not the sub-second you'd assume.
 **What you did instead:** The UI already shows a "saving to walrus memory…" note and stays interactive (you can start the next race while it saves), so it degrades gracefully — but only because we happened to design for async. A naive blocking spinner would look hung.
 **Workshop impact:** Significant. Participants will think their app froze. SKILL.md should state a rough latency range for `rememberAndWait()`/`analyzeAndWait()` and recommend an optimistic-UI or fire-and-forget-with-status pattern. (Note: latency may also be variable — worth measuring a few calls.)
+
+---
+
+**Where it hit:** `app/providers.tsx` — wiring `@mysten/dapp-kit` against `@mysten/sui` v2.17.
+**What was missing:** Sui SDK version churn the docs don't track. `getFullnodeUrl` is gone from `@mysten/sui/client` (it's now `getJsonRpcFullnodeUrl` from `@mysten/sui/jsonRpc`), and a `SuiJsonRpcClient` config now requires *both* `url` and `network`. Worse, `@mysten/dapp-kit` 1.x's `SuiClientProvider` is hardwired to a **JSON-RPC** client — its context type is `SuiJsonRpcClient`, with no gRPC option — even though `@mysten/sui` ships a full `SuiGrpcClient`. So an app that wants gRPC (or makes no RPC calls at all, like this one) is still forced to instantiate a JSON-RPC client just to satisfy dapp-kit.
+**What you did instead:** Read the SDK's `.d.ts` files to find the new export + required config shape, and configured a dormant testnet JSON-RPC client that's never exercised (the app only reads the wallet address).
+**Workshop impact:** Real friction for anyone on current `@mysten/sui`. Most online examples still show `getFullnodeUrl`, which now fails to compile. A short "dapp-kit + current sui" snippet in the kit (or SKILL.md) would save the trial-and-error.
 
 ## Dashboard & onboarding
 
