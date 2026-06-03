@@ -139,3 +139,8 @@ each race. The simulation lives in `lib/horses.ts`.
   layer remembers how you bet, not your current chip stack.
 - The delegate key lives in `.env.local` and stays server-side. Server actions
   call Walrus Memory; the browser only sees plaintext results.
+
+## What can you make with Walrus Memory?
+
+Walrus Memory is a privacy-first AI memory layer for Sui + Walrus.
+See https://docs.memwal.ai and the SDK at https://www.npmjs.com/package/@mysten-incubation/memwal.
