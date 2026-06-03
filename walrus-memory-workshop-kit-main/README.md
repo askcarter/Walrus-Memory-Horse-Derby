@@ -1,3 +1,5 @@
+This was 100% built using the amazing https://github.com/DionisisLougaris/walrus-memory-workshop-kit/tree/main.
+
 # Walrus Memory Workshop Kit — Horse Derby
 
 A minimal Next.js betting game that exercises the core Walrus Memory surface:
