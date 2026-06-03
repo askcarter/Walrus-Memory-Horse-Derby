@@ -278,6 +278,31 @@ export default function Home() {
                 hidden — luck rolls a pre-race boost to the other stats. payouts are set
                 from speed, so the favorite pays least.
               </p>
+              <details className="how-it-works">
+                <summary>how racing works</summary>
+                <p className="hint">
+                  each race, every horse gets a score and the highest wins:{" "}
+                  <strong>speed×1.5 + endurance×1.2 + temperament×0.8 + a little noise</strong>.
+                  luck is rolled first and can boost the other stats before scoring.
+                </p>
+                <ul className="how-list">
+                  <li>
+                    <strong>speed</strong> — visible. biggest factor, and it sets the payout
+                    (fast = favorite = pays least).
+                  </li>
+                  <li>
+                    <strong>endurance</strong> — hidden. pure power, no downside.
+                  </li>
+                  <li>
+                    <strong>temperament</strong> — hidden. high = consistent finishes, low =
+                    wild swings (can upset or flop).
+                  </li>
+                  <li>
+                    <strong>luck</strong> — hidden. each race, every other stat has a luck-in-10
+                    chance to gain +2 to +4 for that race only.
+                  </li>
+                </ul>
+              </details>
             </>
           )}
         </section>
@@ -295,6 +320,10 @@ export default function Home() {
 
           <div className="facts">
             <h3>final stats (hidden until now)</h3>
+            <p className="hint">
+              spd = speed, end = endurance, tmp = temperament, lck = luck. a green +n is a
+              luck boost applied for this race only.
+            </p>
             <div className="reveal-grid">
               {race.finishOrder.map((l) => (
                 <div

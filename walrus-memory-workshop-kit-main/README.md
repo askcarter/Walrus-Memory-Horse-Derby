@@ -16,18 +16,6 @@ wallet address (`betting-history:<0x…>`), so it persists across sessions and
 devices and stays separate from every other player's. No database. The only
 "auth" is the wallet connection itself.
 
-## Branches
-
-- `main` — the workshop starting point (this code).
-- `extension/multi-namespace` — adds a namespace selector inside the tracker.
-- `extension/verifiability` — adds a "what's on Walrus" panel using `restore()`.
-- `extension/decisions-log` — adds a second app at `/decisions` sharing the same account.
-- `extension/permissions-dashboard` *(stretch)* — adds an on-chain delegate key management view.
-
-Each extension branch is a completed reference implementation. Workshop
-participants start from `main` and build their chosen extension themselves
-with Claude Code + the Walrus Memory SDK skill file.
-
 ## What Walrus Memory is
 
 Walrus Memory is a privacy-first AI memory layer for Sui + Walrus.
@@ -96,6 +84,29 @@ tool, paste `SKILL.md` into context before asking it to write Walrus Memory code
 - Hit **suggest a betting strategy** any time. `recall()` pulls your betting
   history out of the `betting-history` namespace and the advisor aggregates it
   into concrete tips, showing the recalled memories with their distance scores.
+
+## How a race is decided
+
+Each horse has four stats (1–10). Every race, each horse gets a **performance
+score**, and the highest score wins — the finish order and the on-screen running
+speed both follow the scores:
+
+```
+performance = speed×1.5 + endurance×1.2 + temperament×0.8 + noise
+```
+
+| Stat | Visible when betting? | What it does |
+|---|---|---|
+| **Speed** | ✅ yes | Heaviest weight (×1.5). Also sets the **odds**: payout ≈ (total speed ÷ this horse's speed) × 0.85, min 1.2× — so the fastest horse is the favorite and pays the least. |
+| **Endurance** | ❌ hidden | Second weight (×1.2). Pure power, no downside. |
+| **Temperament** | ❌ hidden | Small direct weight (×0.8), but it's the **consistency** knob: race noise is `random(0 … 11 − temperament)`. High temperament → small swing (reliable); low → up to ~+10 swing (volatile — can upset or flop). |
+| **Luck** | ❌ hidden | Doesn't score directly. Each race, every *other* stat has a `luck ÷ 10` chance to gain a temporary **+2 to +4** for that race only. |
+
+Because only **speed** is visible when you bet, a horse with mediocre speed but
+strong hidden stats is a long-odds value pick — and only your stored history
+reveals which horses keep beating their odds. That's the whole point of the
+**strategy advisor**. The full stats (and any luck boosts) are revealed after
+each race. The simulation lives in `lib/horses.ts`.
 
 ## What's wired
 

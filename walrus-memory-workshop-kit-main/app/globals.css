@@ -421,6 +421,46 @@ button.secondary {
   flex-shrink: 0;
 }
 
+.how-it-works {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.how-it-works summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.how-it-works summary:hover {
+  color: var(--fg);
+}
+
+.how-it-works[open] summary {
+  margin-bottom: 8px;
+}
+
+.how-it-works .hint {
+  margin-top: 0;
+}
+
+.how-list {
+  margin: 8px 0 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.how-list strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
 .verdict {
   font-size: 16px;
   margin: 0 0 4px 0;
